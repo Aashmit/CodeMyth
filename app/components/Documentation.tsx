@@ -1,16 +1,17 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, BookOpen, Send, GitCommit } from "lucide-react";
+import { Loader2, BookOpen, Send, GitCommit, Eye, EyeOff } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "./ui/scroll-area";
 import axios from "axios";
+import MarkdownPreview from "./MarkdownPreview";
 
 interface DocumentationCardProps {
-  selectedRepo: { full_name: string };
+  selectedRepo: { full_name: string; name: string };
   error: string | null;
   setError: (error: string | null) => void;
-  setUserFeedback: (feedback: string) => void;
+  // setUserFeedback: (feedback: string) => void;
   documentation?: string | null;
   setDocumentation: (documentation: string) => void;
 }
@@ -19,36 +20,12 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
   selectedRepo,
   error,
   setError,
-  setUserFeedback,
+  // setUserFeedback,
   documentation,
   setDocumentation,
 }) => {
   const [processingDoc, setProcessingDoc] = useState(false);
   const [userFeedback, setUserFeedbackLocal] = useState("");
-  // Helper function to format markdown chunks
-  function formatMarkdownChunk(chunk: string) {
-    console.log(chunk, "chunkchunkchunk");
-    // Add double line breaks for proper markdown rendering
-    return chunk
-      .split("\n")
-      .map((line) => {
-        console.log(line, "linelineline");
-        // Preserve existing markdown headers
-        if (line.startsWith("#")) {
-          return line;
-        }
-        // Add proper spacing around list items
-        if (line.match(/^[-*]\s/)) {
-          return `\n${line}\n`;
-        }
-        // Add proper spacing around code blocks
-        if (line.match(/^```/)) {
-          return `\n${line}`;
-        }
-        return line;
-      })
-      .join("\n");
-  }
 
   const handleGenerateDocumentation = async () => {
     console.log("I am here");
@@ -68,7 +45,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 
       // First API call to fetch files from the GitHub repo
       const response = await fetch(
-        `http://localhost:8000/api/py/github/repo/shreya-as/github-issue-page-frontend/files?branch=main&access_token=${accessToken}`
+        `http://localhost:8000/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
       );
       const filesData = (await response.json()) as any;
 
@@ -79,45 +56,26 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 
       console.log("Files data:", filesData);
 
-      // Second API call using POST to generate docs
       const postResponse = await fetch(
-        `http://localhost:8000/api/py/generate-docs`,
+        "http://localhost:8000/api/py/generate-docs",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            files: filesData?.files, // Ensure 'files' is the correct key here
+            files: filesData?.files || [], // Ensure filesData.files is always an array
           }),
         }
       );
-      // Check if the POST request is successful
-      if (postResponse.ok) {
-        const reader = postResponse.body.getReader();
-        const decoder = new TextDecoder();
-        let docData = "";
-        console.log(docData, "docDatadocData");
-        // Read the stream in chunks and accumulate the data
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
 
-          // Decode the chunk and accumulate it
-          const chunk = decoder.decode(value, { stream: true });
-          docData += chunk;
-          // Format the accumulated data so far
-          let formattedDoc = formatMarkdownChunk(docData);
-          console.log(formattedDoc, "formattedDocformattedDocformattedDoc");
-          // Optionally, you can format it here to ensure proper markdown structure
-          // console.log(formattedDocData, "formattedDocDataformattedDocData");
-        }
-
-        // setDocumentation(formattedDocData);
-      } else {
-        // Handle any error responses
-        console.error("Failed to fetch documentation");
+      if (!postResponse.ok) {
+        throw new Error(`HTTP error! Status: ${postResponse.status}`);
       }
+
+      const responseData = await postResponse.json(); // Assuming the response is JSON
+      setDocumentation(responseData.documentation);
+      console.log("Response Data:", responseData);
     } catch (error) {
       console.error("Error during documentation generation:", error);
     } finally {
@@ -132,24 +90,30 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 
     try {
       setProcessingDoc(true);
-      // TODO: Implement backend API for this
+
       const accessToken = localStorage.getItem("accessToken");
       const response = await axios.post(
-        `http://localhost:8000/api/py/refine-docs`,
+        `http://localhost:8000/api/py/docs/feedback`,
         {
-          repo_name: selectedRepo.full_name,
-          access_token: accessToken,
+          filename: selectedRepo.full_name, // Assuming full_name represents the file's identifier
           feedback: userFeedback,
-          previous_documentation: documentation,
+          original_content: documentation, // Renamed to match API requirement
+          chunk_id: 0, // Default value (update if necessary)
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
         }
       );
 
       setDocumentation(response.data.documentation);
-      setUserFeedback(""); // Clear feedback
-      setProcessingDoc(false);
+      // setUserFeedback(""); // Clear feedback
     } catch (err) {
       console.error("Failed to refine documentation:", err);
       setError("Failed to process feedback. Please try again later.");
+    } finally {
       setProcessingDoc(false);
     }
   };
@@ -176,6 +140,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
   const simulateGenerateDocumentation = () => {
     handleGenerateDocumentation();
   };
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   return (
     selectedRepo && (
@@ -222,17 +187,37 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
           {/* Documentation Preview Section */}
           {documentation && (
             <div className="space-y-6">
+              {/* Documentation Preview with Toggle */}
               <div>
-                <h3 className="text-lg font-medium mb-3">
-                  Documentation Preview
-                </h3>
-                <ScrollArea className="h-[300px] rounded-md border bg-muted/50 p-4">
-                  <pre className="whitespace-pre-wrap font-mono text-sm">
-                    {documentation}
-                  </pre>
-                </ScrollArea>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-lg font-medium">Documentation Preview</h3>
+                  <Button
+                    onClick={() => setIsPreviewOpen(!isPreviewOpen)}
+                    variant="outline"
+                    size="sm"
+                    className="flex items-center gap-2"
+                  >
+                    {isPreviewOpen ? (
+                      <EyeOff className="h-4 w-4" />
+                    ) : (
+                      <Eye className="h-4 w-4" />
+                    )}
+                    {isPreviewOpen ? "Hide Preview" : "Show Preview"}
+                  </Button>
+                </div>
+
+                {isPreviewOpen ? (
+                  <MarkdownPreview markdownContent={documentation} />
+                ) : (
+                  <ScrollArea className="h-[300px] rounded-md border bg-muted/50 p-4">
+                    <pre className="whitespace-pre-wrap font-mono text-sm">
+                      {documentation}
+                    </pre>
+                  </ScrollArea>
+                )}
               </div>
 
+              {/* Feedback Section */}
               <div>
                 <h3 className="text-lg font-medium mb-3">Provide Feedback</h3>
                 <Textarea

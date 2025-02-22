@@ -179,13 +179,11 @@ export default function Dashboard(): React.ReactElement {
           </div>
         )}
         <DocumentationCard
-          selectedRepo={selectedRepo!}
+          selectedRepo={selectedRepo as any}
           documentation={documentation}
           setDocumentation={setDocumentation}
           error={error}
-          userFeedback={userFeedback}
           setError={setError}
-          setUserFeedback={setUserFeedback}
         />
       </div>
     </div>

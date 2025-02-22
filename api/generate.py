@@ -38,7 +38,7 @@ OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL')  # Default Ollama URL
 
 llm = OllamaLLM(model=MODEL_NAME, base_url=OLLAMA_BASE_URL)
 CODE_EXTENSIONS = {
-    '.py', '.js', '.java', '.cpp', '.c', '.cs', '.ts', 
+    '.py', '.jsx', '.js','java', '.cpp', '.c', '.cs', '.ts', 
     '.rb', '.php', '.go', '.rs', '.swift', '.kt'
     # Add more extensions as needed
 }
