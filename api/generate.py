@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi import Body
 from pydantic import BaseModel
 from langchain_ollama import OllamaLLM
-from langchain_ibm import WatsonxLLM
+#from langchain_ibm import WatsonxLLM
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import asyncio
@@ -33,7 +33,7 @@ class FileInput(BaseModel):
     files: List[Dict[str, str]]
 
 # Ollama model configuration (adjust based on your setup)
-MODEL_NAME = "granite3.1-dense:2b"  # Replace with your Ollama-hosted model
+MODEL_NAME = "granite3.1-dense:8b"  # Replace with your Ollama-hosted model
 OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL')  # Default Ollama URL
 
 
