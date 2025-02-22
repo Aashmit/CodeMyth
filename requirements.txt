@@ -51,3 +51,4 @@ watchfiles==1.0.4
 websockets==15.0
 yarl==1.18.3
 zstandard==0.23.0
+markdown
