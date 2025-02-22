@@ -2,6 +2,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from .auth import router as auth_router
+from .fetch import router as fetch_router
 
 app = FastAPI(docs_url="/api/py/docs", openapi_url="/api/py/openapi.json")
 
@@ -16,3 +17,4 @@ app.add_middleware(
 
 # Include auth routes
 app.include_router(auth_router, prefix="/api/py")
+app.include_router(fetch_router, prefix="/api/py")
