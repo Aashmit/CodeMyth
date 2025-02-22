@@ -22,15 +22,15 @@ interface RepoSelectorProps {
   repositories: Repository[];
   onSelectRepo: (repo: Repository) => void;
   selectedRepo: Repository | null;
-  onGenerateDocumentation: () => void;
+  // onGenerateDocumentation: () => void;
 }
 
 export default function RepoSelector({
   repositories,
   onSelectRepo,
   selectedRepo,
-  onGenerateDocumentation,
-}: RepoSelectorProps) {
+}: // onGenerateDocumentation,
+RepoSelectorProps) {
   const getFileIcon = (language: string | null) => {
     switch (language) {
       case "Python":
@@ -118,51 +118,6 @@ export default function RepoSelector({
           Generate Documentation
         </Button>
       </div> */}
-      <Card className="mb-8 w-100">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5 text-primary" />
-            {/* Generate Documentation for {selectedRepo.name} */}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Scrollable area to show the data dynamically */}
-          <ScrollArea className="h-[300px] rounded-md border bg-muted/50 p-4 space-y-4">
-            {/* Displaying simulated messages as streaming data */}
-            <div className="text-sm text-muted-foreground">
-              Streaming started...
-            </div>
-
-            {/* Example of data dynamically being added */}
-            <div className="bg-white p-2 rounded-md shadow-md">
-              <p className="font-mono text-sm text-black">
-                Processing request...
-              </p>
-            </div>
-
-            {/* Here, simulate a loader or streaming content */}
-            {/* Replace with dynamic streaming data */}
-            <div className="flex items-center gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
-              <p className="font-mono text-sm text-muted-foreground">
-                Stream is processing...
-              </p>
-            </div>
-
-            {/* You can render dynamically received data here */}
-          </ScrollArea>
-
-          <Button
-            className="w-full gap-2"
-            size="lg"
-            onClick={onGenerateDocumentation}
-          >
-            {/* Streaming or generating documentation */}
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Processing...
-          </Button>
-        </CardContent>
-      </Card>
     </div>
   );
 }

@@ -42,7 +42,6 @@ export default function Dashboard(): React.ReactElement {
   const [reposLoading, setReposLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
-  const [processingDoc, setProcessingDoc] = useState<boolean>(false);
   const [documentation, setDocumentation] = useState<string | null>(null);
   const [userFeedback, setUserFeedback] = useState<string>("");
 
@@ -86,87 +85,6 @@ export default function Dashboard(): React.ReactElement {
     setError("");
     setSelectedRepo(repo);
     setDocumentation(null); // Reset documentation when selecting a new repo
-  };
-
-  const handleGenerateDocumentation = async () => {
-    if (!selectedRepo) return;
-
-    try {
-      setProcessingDoc(true);
-      setDocumentation("");
-      const accessToken = localStorage.getItem("accessToken");
-
-      // Use server-sent events for streaming
-      const eventSource = new EventSource(
-        `http://localhost:8000/api/py/generate-docs-stream?repo_name=${selectedRepo.full_name}&access_token=${accessToken}`
-      );
-
-      eventSource.onmessage = (event) => {
-        const newContent = event.data;
-        setDocumentation((prevDoc) => prevDoc + newContent);
-      };
-
-      eventSource.onerror = () => {
-        console.log("i am here");
-        eventSource.close();
-        setError("Failed to generate documentation. Please try again later.");
-        setProcessingDoc(false);
-      };
-
-      eventSource.addEventListener("done", () => {
-        eventSource.close();
-        setProcessingDoc(false);
-      });
-    } catch (err) {
-      console.error("Failed to generate documentation:", err);
-      setError("Failed to generate documentation. Please try again later.");
-      setProcessingDoc(false);
-    }
-  };
-  console.log(error, "hey error");
-  const handleSubmitFeedback = async () => {
-    if (!userFeedback || !selectedRepo) return;
-
-    try {
-      setProcessingDoc(true);
-      // TODO: Implement backend API for this
-      const accessToken = localStorage.getItem("accessToken");
-      const response = await axios.post(
-        `http://localhost:8000/api/py/refine-docs`,
-        {
-          repo_name: selectedRepo.full_name,
-          access_token: accessToken,
-          feedback: userFeedback,
-          previous_documentation: documentation,
-        }
-      );
-
-      setDocumentation(response.data.documentation);
-      setUserFeedback(""); // Clear feedback
-      setProcessingDoc(false);
-    } catch (err) {
-      console.error("Failed to refine documentation:", err);
-      setError("Failed to process feedback. Please try again later.");
-      setProcessingDoc(false);
-    }
-  };
-
-  const handleCommitDocumentation = async () => {
-    if (!documentation || !selectedRepo) return;
-
-    try {
-      const accessToken = localStorage.getItem("accessToken");
-      await axios.post(`http://localhost:8000/api/py/commit-docs`, {
-        repo_name: selectedRepo.full_name,
-        access_token: accessToken,
-        documentation: documentation,
-      });
-
-      alert("Documentation successfully committed to repository!");
-    } catch (err) {
-      console.error("Failed to commit documentation:", err);
-      setError("Failed to commit documentation. Please try again later.");
-    }
   };
 
   const handleLogout = (): void => {
@@ -256,22 +174,18 @@ export default function Dashboard(): React.ReactElement {
               repositories={repositories}
               onSelectRepo={handleSelectRepo}
               selectedRepo={selectedRepo}
-              onGenerateDocumentation={handleGenerateDocumentation}
+              // onGenerateDocumentation={handleGenerateDocumentation}
             />
           </div>
         )}
-
         <DocumentationCard
           selectedRepo={selectedRepo!}
-          error={error}
-          processingDoc={processingDoc}
           documentation={documentation}
+          setDocumentation={setDocumentation}
+          error={error}
           userFeedback={userFeedback}
-          handleGenerateDocumentation={handleGenerateDocumentation}
           setError={setError}
           setUserFeedback={setUserFeedback}
-          handleSubmitFeedback={handleSubmitFeedback}
-          handleCommitDocumentation={handleCommitDocumentation}
         />
       </div>
     </div>

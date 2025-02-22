@@ -1,49 +1,153 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Loader2,
-  LogOut,
-  Github,
-  BookOpen,
-  Send,
-  GitCommit,
-} from "lucide-react";
+import { Loader2, BookOpen, Send, GitCommit } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "./ui/scroll-area";
+import axios from "axios";
 
 interface DocumentationCardProps {
-  selectedRepo: { name: string };
+  selectedRepo: { full_name: string };
   error: string | null;
-  documentation: string | null;
-  handleGenerateDocumentation: () => void;
   setError: (error: string | null) => void;
   setUserFeedback: (feedback: string) => void;
-  handleSubmitFeedback: () => void;
-  handleCommitDocumentation: () => void;
+  documentation?: string | null;
+  setDocumentation: (documentation: string) => void;
 }
 
 const DocumentationCard: React.FC<DocumentationCardProps> = ({
   selectedRepo,
   error,
-  documentation,
-  handleGenerateDocumentation,
   setError,
   setUserFeedback,
-  handleSubmitFeedback,
-  handleCommitDocumentation,
+  documentation,
+  setDocumentation,
 }) => {
   const [processingDoc, setProcessingDoc] = useState(false);
   const [userFeedback, setUserFeedbackLocal] = useState("");
 
+  const handleGenerateDocumentation = async () => {
+    console.log("I am here");
+
+    if (!selectedRepo) return;
+
+    try {
+      setProcessingDoc(true);
+      setDocumentation("");
+
+      const accessToken = localStorage.getItem("accessToken");
+
+      if (!accessToken) {
+        console.error("Access token not found.");
+        return;
+      }
+
+      // First API call to fetch files from the GitHub repo
+      const response = await fetch(
+        `http://localhost:8000/api/py/github/repo/shreya-as/github-issue-page-frontend/files?branch=main&access_token=${accessToken}`
+      );
+      const filesData = (await response.json()) as any;
+
+      if (!response.ok) {
+        console.error("Failed to fetch files", filesData);
+        return;
+      }
+
+      console.log("Files data:", filesData);
+
+      // Second API call using POST to generate docs
+      const postResponse = await fetch(
+        `http://localhost:8000/api/py/generate-docs`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            files: filesData?.files, // Ensure 'files' is the correct key here
+          }),
+        }
+      );
+      // Check if the POST request is successful
+      if (postResponse.ok) {
+        const reader = postResponse.body.getReader();
+        const decoder = new TextDecoder();
+        let docData = "";
+
+        // Read the stream in chunks and accumulate the data
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Decode the chunk and accumulate it
+          const chunk = decoder.decode(value, { stream: true });
+          docData += chunk;
+        }
+
+        // Optionally, you can format it here to ensure proper markdown structure
+        const formattedDocData = docData.replace(/\n/g, "\n\n"); // Example of formatting for markdown
+        console.log(formattedDocData, "formattedDocDataformattedDocData");
+        // setDocumentation(formattedDocData);
+      } else {
+        // Handle any error responses
+        console.error("Failed to fetch documentation");
+      }
+    } catch (error) {
+      console.error("Error during documentation generation:", error);
+    } finally {
+      setProcessingDoc(false);
+    }
+  };
+
+  console.log(documentation, "hey error");
+  const handleSubmitFeedback = async () => {
+    if (!userFeedback || !selectedRepo) return;
+
+    try {
+      setProcessingDoc(true);
+      // TODO: Implement backend API for this
+      const accessToken = localStorage.getItem("accessToken");
+      const response = await axios.post(
+        `http://localhost:8000/api/py/refine-docs`,
+        {
+          repo_name: selectedRepo.full_name,
+          access_token: accessToken,
+          feedback: userFeedback,
+          previous_documentation: documentation,
+        }
+      );
+
+      setDocumentation(response.data.documentation);
+      setUserFeedback(""); // Clear feedback
+      setProcessingDoc(false);
+    } catch (err) {
+      console.error("Failed to refine documentation:", err);
+      setError("Failed to process feedback. Please try again later.");
+      setProcessingDoc(false);
+    }
+  };
+
+  const handleCommitDocumentation = async () => {
+    if (!documentation || !selectedRepo) return;
+
+    try {
+      const accessToken = localStorage.getItem("accessToken");
+      await axios.post(`http://localhost:8000/api/py/commit-docs`, {
+        repo_name: selectedRepo.full_name,
+        access_token: accessToken,
+        documentation: documentation,
+      });
+
+      alert("Documentation successfully committed to repository!");
+    } catch (err) {
+      console.error("Failed to commit documentation:", err);
+      setError("Failed to commit documentation. Please try again later.");
+    }
+  };
+
   // Function to simulate documentation generation
   const simulateGenerateDocumentation = () => {
-    setProcessingDoc(true);
-    // Simulate async documentation generation
-    setTimeout(() => {
-      setProcessingDoc(false);
-      setUserFeedbackLocal(""); // Reset feedback after doc is generated
-    }, 3000); // Simulate a 3-second delay
+    handleGenerateDocumentation();
   };
 
   return (
@@ -64,7 +168,9 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setError(null)}
+                  onClick={() => {
+                    setError(null);
+                  }}
                   className="h-auto p-1 hover:bg-destructive/20"
                 >
                   ×

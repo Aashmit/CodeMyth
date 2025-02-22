@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from fastapi import Body
 from pydantic import BaseModel
 from langchain_ollama import OllamaLLM
-from langchain_ibm import WatsonxLLM
+# from langchain_ibm import WatsonxLLM
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import asyncio
