@@ -22,18 +22,20 @@ export default function LoginButton(): React.ReactElement {
       })
       .catch((error) => {
         console.error("Error fetching auth URL:", error);
-        
+
         // Extract the most useful error message
         let errorMessage = "Failed to connect to authentication server";
         if (error.response) {
           // The server responded with a status code outside of 2xx range
-          const serverError = error.response.data?.detail || error.response.statusText;
+          const serverError =
+            error.response.data?.detail || error.response.statusText;
           errorMessage = `Server error: ${serverError}`;
         } else if (error.request) {
           // The request was made but no response was received
-          errorMessage = "No response from server. Please check if the API is running.";
+          errorMessage =
+            "No response from server. Please check if the API is running.";
         }
-        
+
         setError(errorMessage);
         setLoading(false);
       });
@@ -55,7 +57,7 @@ export default function LoginButton(): React.ReactElement {
         <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
           <p>{error}</p>
         </div>
-        <button 
+        <button
           onClick={() => window.location.reload()}
           className="px-4 py-2 bg-gray-300 text-gray-800 rounded hover:bg-gray-400 transition-colors"
         >
@@ -66,8 +68,8 @@ export default function LoginButton(): React.ReactElement {
   }
 
   return (
-    <a 
-      href={authUrl} 
+    <a
+      href={authUrl}
       className="px-4 py-2 bg-gray-900 text-white rounded hover:bg-gray-700 transition-colors"
     >
       Login with GitHub
