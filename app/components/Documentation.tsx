@@ -25,6 +25,30 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 }) => {
   const [processingDoc, setProcessingDoc] = useState(false);
   const [userFeedback, setUserFeedbackLocal] = useState("");
+  // Helper function to format markdown chunks
+  function formatMarkdownChunk(chunk: string) {
+    console.log(chunk, "chunkchunkchunk");
+    // Add double line breaks for proper markdown rendering
+    return chunk
+      .split("\n")
+      .map((line) => {
+        console.log(line, "linelineline");
+        // Preserve existing markdown headers
+        if (line.startsWith("#")) {
+          return line;
+        }
+        // Add proper spacing around list items
+        if (line.match(/^[-*]\s/)) {
+          return `\n${line}\n`;
+        }
+        // Add proper spacing around code blocks
+        if (line.match(/^```/)) {
+          return `\n${line}`;
+        }
+        return line;
+      })
+      .join("\n");
+  }
 
   const handleGenerateDocumentation = async () => {
     console.log("I am here");
@@ -73,7 +97,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
         const reader = postResponse.body.getReader();
         const decoder = new TextDecoder();
         let docData = "";
-
+        console.log(docData, "docDatadocData");
         // Read the stream in chunks and accumulate the data
         while (true) {
           const { done, value } = await reader.read();
@@ -82,11 +106,13 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
           // Decode the chunk and accumulate it
           const chunk = decoder.decode(value, { stream: true });
           docData += chunk;
+          // Format the accumulated data so far
+          let formattedDoc = formatMarkdownChunk(docData);
+          console.log(formattedDoc, "formattedDocformattedDocformattedDoc");
+          // Optionally, you can format it here to ensure proper markdown structure
+          // console.log(formattedDocData, "formattedDocDataformattedDocData");
         }
 
-        // Optionally, you can format it here to ensure proper markdown structure
-        const formattedDocData = docData.replace(/\n/g, "\n\n"); // Example of formatting for markdown
-        console.log(formattedDocData, "formattedDocDataformattedDocData");
         // setDocumentation(formattedDocData);
       } else {
         // Handle any error responses
@@ -100,6 +126,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
   };
 
   console.log(documentation, "hey error");
+
   const handleSubmitFeedback = async () => {
     if (!userFeedback || !selectedRepo) return;
 
