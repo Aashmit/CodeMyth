@@ -19,7 +19,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import RepoSelector from "@/components/repo-selector";
+import RepoSelector from "@/components/RepoSelector";
+import DocumentationCard from "@/components/Documentation";
 
 // Add these types to /types/github.ts
 interface GitHubUser {
@@ -82,6 +83,7 @@ export default function Dashboard(): React.ReactElement {
   };
 
   const handleSelectRepo = (repo: Repository) => {
+    setError("");
     setSelectedRepo(repo);
     setDocumentation(null); // Reset documentation when selecting a new repo
   };
@@ -105,7 +107,9 @@ export default function Dashboard(): React.ReactElement {
       };
 
       eventSource.onerror = () => {
+        console.log("i am here");
         eventSource.close();
+        setError("Failed to generate documentation. Please try again later.");
         setProcessingDoc(false);
       };
 
@@ -119,7 +123,7 @@ export default function Dashboard(): React.ReactElement {
       setProcessingDoc(false);
     }
   };
-
+  console.log(error, "hey error");
   const handleSubmitFeedback = async () => {
     if (!userFeedback || !selectedRepo) return;
 
@@ -257,94 +261,18 @@ export default function Dashboard(): React.ReactElement {
           </div>
         )}
 
-        {/* Documentation Section */}
-        {selectedRepo && (
-          <Card className="mb-8">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="h-5 w-5 text-primary" />
-                Generate Documentation for {selectedRepo.name}
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              {!documentation && (
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  onClick={handleGenerateDocumentation}
-                  disabled={processingDoc}
-                >
-                  {processingDoc && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                  {processingDoc ? "Processing..." : "Generate Documentation"}
-                </Button>
-              )}
-
-              {documentation && (
-                <div className="space-y-6">
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">
-                      Documentation Preview
-                    </h3>
-                    <ScrollArea className="h-[300px] rounded-md border bg-muted/50 p-4">
-                      <pre className="whitespace-pre-wrap font-mono text-sm">
-                        {documentation}
-                      </pre>
-                    </ScrollArea>
-                  </div>
-
-                  <div>
-                    <h3 className="text-lg font-medium mb-3">
-                      Provide Feedback
-                    </h3>
-                    <Textarea
-                      placeholder="Suggest improvements or changes to the documentation..."
-                      value={userFeedback}
-                      onChange={(e) => setUserFeedback(e.target.value)}
-                      className="min-h-[120px] mb-4"
-                    />
-                    <div className="flex gap-3">
-                      <Button
-                        onClick={handleSubmitFeedback}
-                        disabled={!userFeedback || processingDoc}
-                        className="gap-2"
-                      >
-                        <Send className="h-4 w-4" />
-                        Submit Feedback
-                      </Button>
-                      <Button
-                        onClick={handleCommitDocumentation}
-                        variant="secondary"
-                        className="gap-2"
-                      >
-                        <GitCommit className="h-4 w-4" />
-                        Commit to Repository
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Error Display */}
-        {error && (
-          <div className="rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-destructive">
-            <div className="flex justify-between items-center">
-              <p>{error}</p>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setError(null)}
-                className="h-auto p-1 hover:bg-destructive/20"
-              >
-                ×
-              </Button>
-            </div>
-          </div>
-        )}
+        <DocumentationCard
+          selectedRepo={selectedRepo!}
+          error={error}
+          processingDoc={processingDoc}
+          documentation={documentation}
+          userFeedback={userFeedback}
+          handleGenerateDocumentation={handleGenerateDocumentation}
+          setError={setError}
+          setUserFeedback={setUserFeedback}
+          handleSubmitFeedback={handleSubmitFeedback}
+          handleCommitDocumentation={handleCommitDocumentation}
+        />
       </div>
     </div>
   );

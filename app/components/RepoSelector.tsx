@@ -7,9 +7,16 @@ import {
   CardContent,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { FileIcon, FolderIcon, CheckCircleIcon } from "lucide-react";
+import {
+  FileIcon,
+  FolderIcon,
+  CheckCircleIcon,
+  BookOpen,
+  Loader2,
+} from "lucide-react";
 
 interface RepoSelectorProps {
   repositories: Repository[];
@@ -40,7 +47,9 @@ export default function RepoSelector({
   return (
     <div className="flex w-full gap-4">
       <div className="flex-1">
-        <h2 className="text-lg font-semibold mb-4">Select a Repository</h2>
+        <h2 className="text-lg font-semibold mb-4 text-white">
+          Select a Repository
+        </h2>
         <ScrollArea className="h-[400px] rounded-lg border">
           {repositories.length === 0 ? (
             <Card>
@@ -58,10 +67,10 @@ export default function RepoSelector({
                   }`}
                 >
                   <CardHeader className="pb-2 flex items-center justify-between">
-                    <h3 className="font-medium truncate flex items-center gap-2">
+                    <div className="flex items-center gap-2 truncate">
                       <FolderIcon className="w-4 h-4" />
-                      {repo.name}
-                    </h3>
+                      <h3 className="font-medium truncate">{repo.name}</h3>
+                    </div>
                     {selectedRepo?.id === repo.id && (
                       <CheckCircleIcon className="w-5 h-5 text-green-500" />
                     )}
@@ -72,15 +81,17 @@ export default function RepoSelector({
                     </p>
                   </CardContent>
                   <CardFooter className="flex items-center justify-between">
-                    {repo.language && (
-                      <Badge
-                        variant="secondary"
-                        className="mr-2 flex items-center gap-1"
-                      >
-                        {getFileIcon(repo.language)}
-                        {repo.language}
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {repo.language && (
+                        <Badge
+                          variant="secondary"
+                          className="flex items-center gap-1"
+                        >
+                          {getFileIcon(repo.language)}
+                          {repo.language}
+                        </Badge>
+                      )}
+                    </div>
                     <Button
                       size="sm"
                       variant={
@@ -97,7 +108,7 @@ export default function RepoSelector({
           )}
         </ScrollArea>
       </div>
-      <div className="w-64">
+      {/* <div className="w-64">
         <h2 className="text-lg font-semibold mb-4">Actions</h2>
         <Button
           className="w-full"
@@ -106,7 +117,52 @@ export default function RepoSelector({
         >
           Generate Documentation
         </Button>
-      </div>
+      </div> */}
+      <Card className="mb-8 w-100">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BookOpen className="h-5 w-5 text-primary" />
+            {/* Generate Documentation for {selectedRepo.name} */}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {/* Scrollable area to show the data dynamically */}
+          <ScrollArea className="h-[300px] rounded-md border bg-muted/50 p-4 space-y-4">
+            {/* Displaying simulated messages as streaming data */}
+            <div className="text-sm text-muted-foreground">
+              Streaming started...
+            </div>
+
+            {/* Example of data dynamically being added */}
+            <div className="bg-white p-2 rounded-md shadow-md">
+              <p className="font-mono text-sm text-black">
+                Processing request...
+              </p>
+            </div>
+
+            {/* Here, simulate a loader or streaming content */}
+            {/* Replace with dynamic streaming data */}
+            <div className="flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <p className="font-mono text-sm text-muted-foreground">
+                Stream is processing...
+              </p>
+            </div>
+
+            {/* You can render dynamically received data here */}
+          </ScrollArea>
+
+          <Button
+            className="w-full gap-2"
+            size="lg"
+            onClick={onGenerateDocumentation}
+          >
+            {/* Streaming or generating documentation */}
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processing...
+          </Button>
+        </CardContent>
+      </Card>
     </div>
   );
 }
