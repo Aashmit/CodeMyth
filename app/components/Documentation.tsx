@@ -26,7 +26,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 }) => {
   const [processingDoc, setProcessingDoc] = useState(false);
   const [userFeedback, setUserFeedbackLocal] = useState("");
-
+  console.log(documentation, "documentationdocumentation");
   const handleGenerateDocumentation = async () => {
     console.log("I am here");
 
@@ -77,6 +77,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       setDocumentation(responseData.documentation);
       console.log("Response Data:", responseData);
     } catch (error) {
+      setError("Failed to generate documentation. Please try again later.");
       console.error("Error during documentation generation:", error);
     } finally {
       setProcessingDoc(false);

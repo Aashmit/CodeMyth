@@ -6,22 +6,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
 import type { Repository } from "@/types/github";
-import {
-  Loader2,
-  LogOut,
-  Github,
-  BookOpen,
-  Send,
-  GitCommit,
-} from "lucide-react";
+import { Loader2, LogOut, Github, BookOpen } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Card, CardContent } from "@/components/ui/card";
 import RepoSelector from "@/components/RepoSelector";
 import DocumentationCard from "@/components/Documentation";
-
+import ReactMarkdownPreview from "@/components/MarkdownPreview";
 // Add these types to /types/github.ts
 interface GitHubUser {
   login: string;
@@ -185,6 +176,7 @@ export default function Dashboard(): React.ReactElement {
           error={error}
           setError={setError}
         />
+        <ReactMarkdownPreview />
       </div>
     </div>
   );
