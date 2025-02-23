@@ -56,7 +56,7 @@ async def github_login(request: Request):
                 content={"detail": "GitHub CLIENT_ID is missing. Check your .env file."}
             )
         
-        auth_url = f"{GITHUB_OAUTH_URL}?client_id={GITHUB_CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=user"
+        auth_url = f"{GITHUB_OAUTH_URL}?client_id={GITHUB_CLIENT_ID}&redirect_uri={REDIRECT_URI}&scope=public_repo"
         logger.info(f"Generated auth URL: {auth_url}")
         return {"auth_url": auth_url}
     
