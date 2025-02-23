@@ -31,7 +31,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-MODEL_NAME = "granite3.1-dense:8b"
+MODEL_NAME = "granite3.1-dense:2b"
 OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL')
 llm = OllamaLLM(model=MODEL_NAME, base_url=OLLAMA_BASE_URL)
 
