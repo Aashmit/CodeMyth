@@ -13,7 +13,9 @@ export default function GitHubAuth() {
 
     if (code) {
       axios
-        .get(`http://localhost:8000/api/py/auth/github/callback?code=${code}`)
+        .get(
+          `https://code-myth.vercel.app/api/py/auth/github/callback?code=${code}`
+        )
         .then((response) => {
           setUser(response.data.user);
           setLoading(false);

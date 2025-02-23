@@ -15,7 +15,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
 # Include auth routes
 app.include_router(auth_router, prefix="/api/py")
 app.include_router(fetch_router, prefix="/api/py")
 app.include_router(generate_router, prefix="/api/py")
+
+@app.get("/api/py")
+def read_root():
+    return {"Hello": "World"}
