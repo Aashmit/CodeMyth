@@ -18,15 +18,6 @@ import datetime
 
 load_dotenv()
 
-parameters = {
-    "decoding_method": "sample",
-    "max_new_tokens": 4000,
-    "min_new_tokens": 1,
-    "temperature": 0.5,
-    "top_k": 50,
-    "top_p": 1,
-}
-
 logger = logging.getLogger(__name__)
 router = APIRouter()
 
@@ -188,7 +179,7 @@ async def refine_documentation(data: FeedbackInput = Body(...)):
         {history_str}
         User feedback: "{feedback}"
         Important: Always return the full documentation in 'updated_docs', including all existing sections, with refinements applied as requested.
-
+        
         Refine the documentation based on the feedback:
         - If the feedback requests a project-wide overview, enhance the '## Introduction' section or add an '## Overview' section, preserving all existing '## File Documentation' sections.
         - If the feedback requests clarification, improve readability or add explanations to the relevant sections without removing content.
@@ -196,44 +187,24 @@ async def refine_documentation(data: FeedbackInput = Body(...)):
         - If the feedback identifies errors, correct them while maintaining the rest of the documentation.
         - For unclear feedback, ask the user for clarification in the response and return the documentation unchanged.
 
-        Return your response as a JSON object in this exact format:
-        ```json
-        {{
-          "response": "A concise reply to the user explaining what you changed (or why no changes were made)",
-          "updated_docs": "The full revised documentation in valid markdown format (unchanged if no update is needed)"
-        }}
-        ```
+        Return a JSON object with:
+        - "response": A concise reply to the user explaining what you changed (or why no changes were made)
+        - "updated_docs": The full revised documentation in valid markdown format (unchanged if no update is needed)
 
-        Example response for unclear feedback:
-        ```json
-        {{
-          "response": "I'm not sure what you mean by 'make it better'. Could you please provide more specific guidance?",
-          "updated_docs": "{current_docs}"
-        }}
-        ```
-
-        Ensure your output is valid JSON with properly escaped quotes and no trailing commas. Do not include any text outside the JSON object.
         """
 
-        # Apply Ollama-specific parameters
-        response = await llm.agenerate([prompt], **parameters)
-        raw_response = response.generations[0][0].text.strip()
+        response = await llm.agenerate([prompt])
+        raw_response = response.generations[0][0].text
         logger.debug(f"LLM raw response: {raw_response}")
 
         try:
             result = json.loads(raw_response)
             if "response" not in result or "updated_docs" not in result:
                 raise ValueError("Missing required fields 'response' or 'updated_docs'")
-        except json.JSONDecodeError as e:
-            logger.error(f"Invalid JSON from LLM: {raw_response} - Error: {str(e)}")
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.error(f"Invalid JSON from LLM: {str(e)}")
             result = {
-                "response": "I couldn’t process your feedback due to an issue with the response format. Please try again.",
-                "updated_docs": current_docs
-            }
-        except ValueError as e:
-            logger.error(f"LLM response missing required fields: {raw_response} - Error: {str(e)}")
-            result = {
-                "response": "The response was incomplete. Please try again or clarify your feedback.",
+                "response": "I couldn’t process your feedback due to an internal error. Please try again or provide more specific guidance.",
                 "updated_docs": current_docs
             }
 
@@ -260,7 +231,7 @@ async def refine_documentation(data: FeedbackInput = Body(...)):
     except Exception as e:
         logger.error(f"Error refining documentation: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Failed to refine documentation: {str(e)}")
-    
+
 GITHUB_API_URL = "https://api.github.com"
 @router.post("docs/accept-changes", response_model=dict)
 async def accept_changes(data: AcceptChangesInput = Body(...)):
