@@ -4,6 +4,9 @@
 
 This project provides a seamless workflow for generating AI-powered documentation for GitHub repositories using secure OAuth authentication. Users can select repositories, fetch relevant code files, and generate accurate, context-aware documentation using IBM Granite 3.1 Dense model.
 
+## Project Demo
+[Project Demo](https://code-myth.vercel.app/) (note: won't work unless ollama has been started)
+
 ## Features
 
 1. **Secure GitHub OAuth Login**
