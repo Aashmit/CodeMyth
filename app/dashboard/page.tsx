@@ -35,6 +35,8 @@ export default function Dashboard(): React.ReactElement {
   const [selectedRepo, setSelectedRepo] = useState<Repository | null>(null);
   const [documentation, setDocumentation] = useState<string | null>(null);
   const [userFeedback, setUserFeedback] = useState<string>("");
+  const [warning, setWarning] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null); // Success state for success message
 
   useEffect(() => {
     // Get user data from localStorage
@@ -74,6 +76,8 @@ export default function Dashboard(): React.ReactElement {
 
   const handleSelectRepo = (repo: Repository) => {
     setError("");
+    setWarning(null);
+    setSuccess(null);
     setSelectedRepo(repo);
     setDocumentation(null); // Reset documentation when selecting a new repo
   };
@@ -175,8 +179,11 @@ export default function Dashboard(): React.ReactElement {
           setDocumentation={setDocumentation}
           error={error}
           setError={setError}
+          warning={warning}
+          setWarning={setWarning}
+          success={success}
+          setSuccess={setSuccess}
         />
-        <ReactMarkdownPreview />
       </div>
     </div>
   );
