@@ -10,7 +10,7 @@ export default function LoginButton(): React.ReactElement {
 
   useEffect(() => {
     axios
-      .get("http://localhost:8000/api/py/auth/github")
+      .get("https://code-myth.vercel.app/api/py/auth/github")
       .then((response) => {
         if (response.data.auth_url) {
           setAuthUrl(response.data.auth_url);

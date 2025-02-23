@@ -57,7 +57,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 
       // First API call to fetch files from the GitHub repo
       const response = await fetch(
-        `http://localhost:8000/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
+        `https://code-myth.vercel.app/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
       );
       const filesData = (await response.json()) as any;
 
@@ -71,7 +71,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 
       setGeneratingDOcs(true);
       const postResponse = await fetch(
-        "http://localhost:8000/api/py/generate-docs",
+        "https://code-myth.vercel.app/api/py/generate-docs",
         {
           method: "POST",
           headers: {
@@ -111,7 +111,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 
       const accessToken = localStorage.getItem("accessToken");
       const feedbackResponse = await axios.post(
-        `http://localhost:8000/api/py/docs/refine`,
+        `https://code-myth.vercel.app/api/py/docs/refine`,
         {
           documentation_id: docId,
           feedback: userFeedback,
@@ -162,7 +162,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       const accessToken = localStorage.getItem("accessToken");
       const username = selectedRepo.full_name.split("/")[0];
       await axios.post(
-        `http://localhost:8000/api/pydocs/accept-changes`,
+        `https://code-myth.vercel.app/api/pydocs/accept-changes`,
         {
           documentation_id: docId, // Assuming this is the correct ID
           repo_owner: username, // Replace with actual owner

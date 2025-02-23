@@ -41,7 +41,7 @@ export default function CallbackPage(): React.ReactElement | null {
     // Exchange code for access token
     axios
       .get<AuthResponse>(
-        `http://localhost:8000/api/py/auth/github/callback?code=${code}`
+        `https://code-myth.vercel.app/api/py/auth/github/callback?code=${code}`
       )
       .then((response) => {
         // Store user data in localStorage or a state management solution
