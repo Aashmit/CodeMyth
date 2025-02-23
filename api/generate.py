@@ -6,13 +6,16 @@ from pydantic import BaseModel
 from langchain_ollama import OllamaLLM
 from langchain.prompts import PromptTemplate
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from .schemas import FeedbackInput, FeedbackResponse
+from .schemas import FeedbackInput, FeedbackResponse, DocumentationResponse
 import asyncio
+import uuid
+import difflib
 import tiktoken
 from typing import List, Dict
 import json
 import os
 from dotenv import load_dotenv
+import datetime
 
 load_dotenv()
 
@@ -38,8 +41,8 @@ OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL')  # Default Ollama URL
 
 llm = OllamaLLM(model=MODEL_NAME, base_url=OLLAMA_BASE_URL)
 CODE_EXTENSIONS = {
-    '.py', '.js', '.java', '.cpp', '.c', '.cs', '.ts', 
-    '.rb', '.php', '.go', '.rs', '.swift', '.kt'
+    '.py', '.js', '.jsx' ,'.java', '.cpp', '.c', '.cs', '.ts', 
+    '.rb', '.php', '.go', '.rs', '.swift', '.kt','.tsx'
     # Add more extensions as needed
 }
 # Documentation template for consistency
@@ -157,71 +160,119 @@ async def generate_unified_documentation(files: List[Dict[str, str]], project_na
         file_documentation=file_documentation
     )
 
-@router.post("/generate-docs")
+# In-memory storage for documentation and chat history
+DOC_STORAGE = {}
+
+@router.post("/generate-docs", response_model=DocumentationResponse)
 async def generate_documentation(data: FileInput = Body(...)):
-    """Generate unified developer documentation for fetched GitHub files and return as a single JSON response."""
+    """Generate initial documentation and store it with a unique ID."""
     files = data.files
     if not files:
         raise HTTPException(status_code=400, detail="No files provided.")
+    unified_docs = await generate_unified_documentation(files, project_name="MyProject")
+    doc_id = str(uuid.uuid4())
+    initial_version = {
+        "version_number": 1,
+        "content": unified_docs,
+        "timestamp": datetime.datetime.now().isoformat(),
+        "feedback": None
+    }
+    DOC_STORAGE[doc_id] = {
+        "versions": [initial_version],
+        "current_version": 1,
+        "chat_history": []
+    }
+    return DocumentationResponse(documentation_id=doc_id, documentation=unified_docs)
 
-    # Generate unified documentation
-    unified_docs = await generate_unified_documentation(files, project_name="Redis_Cache")
-    return JSONResponse(content={"documentation": unified_docs})
-
-@router.post(
-    "/docs/feedback",
-    response_model=FeedbackResponse,
-    summary="Process feedback and refine documentation",
-    description="Refines existing documentation for a specific file based on user feedback."
-)
-async def process_feedback(feedback: FeedbackInput):
-    """Handle user feedback and regenerate specific sections."""
-    if not is_code_file(feedback.filename):
-        raise HTTPException(status_code=400, detail=f"File {feedback.filename} is not a supported code file type")
-
+@router.post("/docs/refine", response_model=FeedbackResponse)
+async def refine_documentation(data: FeedbackInput = Body(...)):
+    """Refine documentation based on user feedback while preserving existing details."""
     try:
-        # Refine prompt with feedback
-        refined_prompt = PromptTemplate(
-            input_variables=["code", "filename", "feedback"],
-            template="""
-            You previously generated documentation for this code...
-            """
-        )
+        doc_id = data.documentation_id
+        feedback = data.feedback
+        if doc_id not in DOC_STORAGE:
+            raise HTTPException(status_code=404, detail="Documentation not found")
 
-        # Generate refined documentation
-        prompt = refined_prompt.format(
-            code=feedback.original_content,
-            filename=feedback.filename,
-            feedback=feedback.feedback
-        )
-        refined_doc = await llm.agenerate([prompt])
-        doc_content = refined_doc.generations[0][0].text
+        # Retrieve current version and documentation
+        current_version = DOC_STORAGE[doc_id]["current_version"]
+        versions = DOC_STORAGE[doc_id]["versions"]
+        current_version_entry = next(v for v in versions if v["version_number"] == current_version)
+        current_docs = current_version_entry["content"]
 
-        # Process documentation
-        if "#### Details" in doc_content:
-            parts = doc_content.split("#### Details")
-            overview = parts[0].strip()
-            details = "#### Details" + (parts[1] if len(parts) > 1 else "")
-        else:
-            logger.warning(f"No '#### Details' found in refined documentation for {feedback.filename}")
-            overview = doc_content.strip()
-            details = ""
+        # Retrieve chat history (last 5 turns)
+        chat_history = DOC_STORAGE[doc_id]["chat_history"]
+        history_str = "\n".join([f"User: {entry['user']}\nAssistant: {entry['assistant']}" for entry in chat_history[-5:]])
 
-        documentation = DOC_TEMPLATE.format(
-            filename=feedback.filename,
-            overview=overview,
-            details=details
-        )
+        # Construct the prompt for the LLM
+        prompt = f"""
+        You are a documentation expert tasked with refining technical documentation. Here’s the current documentation:
+        ```
+        {current_docs}
+        ```
+        Past conversation:
+        {history_str}
+        User feedback: "{feedback}"
+
+        Analyze the feedback and refine the documentation as follows:
+        - If the feedback requests a project-wide overview, enhance the '## Introduction' section or add an '## Overview' section to summarize the project’s purpose and components, while preserving all existing '## File Documentation' sections (including their '#### Overview' and '#### Details' subsections).
+        - If the feedback requests clarification, improve readability or add explanations to the relevant sections without removing existing content.
+        - If the feedback asks for more details, expand the relevant section with examples or specifics, keeping all other content intact.
+        - If the feedback identifies errors, correct them while maintaining the rest of the documentation.
+        - For unclear feedback, ask the user for clarification in the response and return the documentation unchanged.
+
+        Return a JSON object with:
+        - "response": A concise reply to the user explaining what you changed (or why no changes were made)
+        - "updated_docs": The revised documentation in valid markdown format (unchanged if no update is needed)
+
+        Important: Unless explicitly requested, do not remove any existing sections, including detailed file documentation. Ensure all refinements enhance rather than replace the original content.
+        """
+
+        # Generate response from LLM
+        response = await llm.agenerate([prompt])
+        raw_response = response.generations[0][0].text
+        logger.debug(f"LLM raw response: {raw_response}")
+
+        # Parse LLM response with fallback for invalid JSON
+        try:
+            result = json.loads(raw_response)
+            if "response" not in result or "updated_docs" not in result:
+                raise ValueError("Missing required fields 'response' or 'updated_docs'")
+        except (json.JSONDecodeError, ValueError) as e:
+            logger.error(f"Invalid JSON from LLM: {str(e)}")
+            result = {
+                "response": "I couldn’t process your feedback due to an internal error. Please try again or provide more specific guidance.",
+                "updated_docs": current_docs
+            }
+        # Update chat history
+        chat_history.append({"user": feedback, "assistant": result["response"]})
+        DOC_STORAGE[doc_id]["chat_history"] = chat_history[-5:]
+
+        # Check if documentation was updated
+        diff_str = None
+        if result["updated_docs"] != current_docs:
+            # Create new version
+            new_version_number = len(versions) + 1
+            new_version = {
+                "version_number": new_version_number,
+                "content": result["updated_docs"],
+                "timestamp": datetime.datetime.now().isoformat(),
+                "feedback": feedback
+            }
+            versions.append(new_version)
+            DOC_STORAGE[doc_id]["current_version"] = new_version_number
+            logger.info(f"Created new version {new_version_number} for doc_id {doc_id}")
+            # Compute diff
+            old_lines = current_docs.splitlines()
+            new_lines = new_version["content"].splitlines()
+            diff = difflib.unified_diff(old_lines, new_lines, lineterm='')
+            diff_str = '\n'.join(diff)
 
         return FeedbackResponse(
-            filename=feedback.filename,
-            documentation=documentation,
-            chunk_id=feedback.chunk_id
+            response=result["response"],
+            updated_docs=result["updated_docs"],
+            diff=diff_str
         )
+
     except Exception as e:
-        logger.error(f"Error processing feedback: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Failed to process feedback: {str(e)}")
-
-
-# Example usage with your GitHub endpoint
-# Call `/github/repo/{owner}/{repo}/files` first, then pass the result to `/generate-docs`
+        logger.error(f"Error refining documentation: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Failed to refine documentation: {str(e)}")
