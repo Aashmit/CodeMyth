@@ -129,9 +129,11 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
           "I couldn’t process your feedback due to an internal error"
         )
       ) {
-        setWarning(
-          "⚠️ Unable to process feedback due to an internal error. Please refine your input and try again."
-        );
+        // setWarning(
+        //   "⚠️ Unable to process feedback due to an internal error. Please refine your input and try again."
+        // );
+        setWarning(null);
+        setSuccess("Feedback processed successfully!");
         setUserFeedbackLocal("");
         return;
       }
