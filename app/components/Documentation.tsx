@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "./ui/scroll-area";
 import axios from "axios";
 import MarkdownPreview from "./MarkdownPreview";
-
+ 
 // Update the prop type to allow functional updates
 interface DocumentationCardProps {
   selectedRepo: { full_name: string; name: string };
@@ -219,7 +219,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
 
       if (
         feedbackResponse.data.response?.includes(
-          "I couldn’t process your feedback due to an internal error"
+          "I couldn't process your feedback due to an internal error"
         )
       ) {
         setWarning(null);
@@ -333,41 +333,36 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
               </div>
             )}
 
-            {!documentation && (
-              <div className="flex gap-4">
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  onClick={handleGenerateDocumentation}
-                  disabled={processingDoc}
-                >
-                  {processingDoc && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                  {generatingDocs
-                    ? "Generating Documentation"
-                    : processingDoc
-                    ? "Processing..."
-                    : "Generate Documentation"}
-                </Button>
-                <Button
-                  className="w-full gap-2"
-                  size="lg"
-                  variant="outline"
-                  onClick={handleGenerateWithGroq}
-                  disabled={processingDoc}
-                >
-                  {processingDoc && (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  )}
-                  {generatingDocs
-                    ? "Generating with Groq"
-                    : processingDoc
-                    ? "Processing..."
-                    : "Generate with Groq"}
-                </Button>
-              </div>
-            )}
+            {/* Changed conditional to render buttons regardless of 'documentation' state */}
+            <div className="flex gap-4">
+              <Button
+                className="w-1/2 gap-2"
+                size="lg"
+                onClick={handleGenerateDocumentation}
+                disabled={processingDoc}
+              >
+                {processingDoc && <Loader2 className="h-4 w-4 animate-spin" />}
+                {generatingDocs
+                  ? "Generating Documentation"
+                  : processingDoc
+                  ? "Processing..."
+                  : "Generate Documentation"}
+              </Button>
+              <Button
+                className="w-1/2 gap-2"
+                size="lg"
+                variant="outline"
+                onClick={handleGenerateWithGroq}
+                disabled={processingDoc}
+              >
+                {processingDoc && <Loader2 className="h-4 w-4 animate-spin" />}
+                {generatingDocs
+                  ? "Generating with Groq"
+                  : processingDoc
+                  ? "Processing..."
+                  : "Generate with Groq"}
+              </Button>
+            </div>
 
             {showGroqModal && (
               <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
@@ -440,37 +435,37 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
           </div>
 
           <Card>
-            <h3 className="text-lg font-medium mb-3">Provide Feedback</h3>
-            <Textarea
-              placeholder="Suggest improvements or changes to the documentation..."
-              value={userFeedback}
-              onChange={(e) => setUserFeedbackLocal(e.target.value)}
-              className="min-h-[120px] mb-4"
-            />
-            <div className="flex gap-3">
-              <Button
-                onClick={handleSubmitFeedback}
-                disabled={!userFeedback || processingDoc || !docId}
-                className="gap-2"
-              >
-                <Send className="h-4 w-4" />
-                Submit Feedback
-              </Button>
-              <Button
-                onClick={handleCommitDocumentation}
-                variant="secondary"
-                disabled={!docId}
-                className="gap-2"
-              >
-                <GitCommit className="h-4 w-4" />
-                Commit to Repository
-              </Button>
-            </div>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-medium mb-3">Provide Feedback</h3>
+              <Textarea
+                placeholder="Suggest improvements or changes to the documentation..."
+                value={userFeedback}
+                onChange={(e) => setUserFeedbackLocal(e.target.value)}
+                className="min-h-[120px] mb-4"
+              />
+              <div className="flex gap-3">
+                <Button
+                  onClick={handleSubmitFeedback}
+                  disabled={!userFeedback || processingDoc || !docId}
+                  className="gap-2"
+                >
+                  <Send className="h-4 w-4" />
+                  Submit Feedback
+                </Button>
+                <Button
+                  onClick={handleCommitDocumentation}
+                  variant="secondary"
+                  disabled={!docId}
+                  className="gap-2"
+                >
+                  <GitCommit className="h-4 w-4" />
+                  Commit to Repository
+                </Button>
+              </div>
+            </CardContent>
           </Card>
         </div>
       )}
     </>
-  );
-};
-
-export default DocumentationCard;
+  );}
+  export { DocumentationCard };

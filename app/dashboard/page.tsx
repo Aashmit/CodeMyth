@@ -11,7 +11,7 @@ import { Loader2, LogOut, Github, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import RepoSelector from "@/components/RepoSelector";
-import DocumentationCard from "@/components/Documentation";
+import { DocumentationCard } from "@/components/Documentation";
 import ReactMarkdownPreview from "@/components/MarkdownPreview";
 // Add these types to /types/github.ts
 interface GitHubUser {
