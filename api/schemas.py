@@ -25,3 +25,8 @@ class AcceptChangesInput(BaseModel):
     github_token: str = Field(..., description="GitHub Personal Access Token from the frontend")
     branch: str = Field(default="main", description="Target branch (default: 'main')")
     file_path: str = Field(default="developer_documentation.md", description="Path in repo to save the file")
+
+class GroqInput(BaseModel):
+    files: List[Dict[str, str]] = Field(..., description="List of files with 'path' and 'content' for batch processing")
+    groq_api_key: str = Field(..., description="User-provided Groq API key")
+    model_name: str = Field(default="mixtral-8x7b-32768", description="Groq model name, defaults to mixtral-8x7b-32768")
