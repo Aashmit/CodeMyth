@@ -59,7 +59,8 @@ export default function Dashboard(): React.ReactElement {
     try {
       setReposLoading(true);
       const response = await axios.get(
-        `https://code-myth.vercel.app/api/py/github/repos`,
+        //`https://code-myth.vercel.app/api/py/github/repos`,
+        `http://localhost:8000/api/py/github/repos`,
         {
           params: { access_token: accessToken },
         }

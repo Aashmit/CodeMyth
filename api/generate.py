@@ -1,3 +1,4 @@
+#api/generate.py
 import logging
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
@@ -22,7 +23,7 @@ logger = logging.getLogger(__name__)
 router = APIRouter()
 
 
-MODEL_NAME = "granite3.1-dense:2b"
+MODEL_NAME = "llama3.2:1B"
 OLLAMA_BASE_URL = os.getenv('OLLAMA_BASE_URL')
 llm = OllamaLLM(model=MODEL_NAME, base_url=OLLAMA_BASE_URL)
 

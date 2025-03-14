@@ -54,7 +54,8 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       }
 
       const response = await fetch(
-        `https://code-myth.vercel.app/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
+      //  `https://code-myth.vercel.app/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
+      `http://localhost:8000/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
       );
       const filesData = await response.json();
 
@@ -66,7 +67,9 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       setGeneratingDocs(true);
 
       const postResponse = await fetch(
-        "https://code-myth.vercel.app/api/py/generate-docs",
+        //"https://code-myth.vercel.app/api/py/generate-docs",
+        "http://localhost:8000/api/py/generate-docs",
+        // ,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -114,7 +117,8 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       }
 
       const filesResponse = await fetch(
-        `https://code-myth.vercel.app/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
+        // `https://code-myth.vercel.app/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
+        `http://localhost:8000/api/py/github/repo/${selectedRepo.full_name}/files?branch=main&access_token=${accessToken}`
       );
       const filesData = await filesResponse.json();
 
@@ -126,7 +130,8 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       setGeneratingDocs(true);
 
       const response = await fetch(
-        "https://code-myth.vercel.app/api/py/generate-with-groq",
+        // "https://code-myth.vercel.app/api/py/generate-with-groq",
+        "http://localhost:8000/api/py/generate-with-groq",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -204,7 +209,8 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       setProcessingDoc(true);
       const accessToken = localStorage.getItem("accessToken");
       const feedbackResponse = await axios.post(
-        `https://code-myth.vercel.app/api/py/docs/refine`,
+        // `https://code-myth.vercel.app/api/py/docs/refine`,
+        `http://localhost:8000/api/py/docs/refine`,
         {
           documentation_id: docId,
           feedback: userFeedback,
@@ -249,7 +255,8 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
       const accessToken = localStorage.getItem("accessToken");
       const username = selectedRepo.full_name.split("/")[0];
       await axios.post(
-        `https://code-myth.vercel.app/api/py/docs/accept-changes`,
+        // `https://code-myth.vercel.app/api/py/docs/accept-changes`,
+        `http://localhost:8000/api/py/docs/accept-changes`,
         {
           documentation_id: docId,
           repo_owner: username,
@@ -336,7 +343,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
             {/* Changed conditional to render buttons regardless of 'documentation' state */}
             <div className="flex gap-4">
               <Button
-                className="w-1/2 gap-2"
+                className="w-full gap-2"
                 size="lg"
                 onClick={handleGenerateDocumentation}
                 disabled={processingDoc}
@@ -349,7 +356,7 @@ const DocumentationCard: React.FC<DocumentationCardProps> = ({
                   : "Generate Documentation"}
               </Button>
               <Button
-                className="w-1/2 gap-2"
+                className="w-full gap-2"
                 size="lg"
                 variant="outline"
                 onClick={handleGenerateWithGroq}

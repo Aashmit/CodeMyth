@@ -1,23 +1,79 @@
-'use client'; // Ensure this file is treated as a Client Component
+"use client"
 
-import LoginButton from "./components/LoginButton";
+import { useEffect, useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { useRouter } from "next/navigation"
+import { Loader2, Github } from "lucide-react"
 
-export default function Home() {
-    const handleLearnMore = () => {
-        alert('Explore our features!');
-    };
+export default function HomePage() {
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
 
-    return (
-        <main className="flex flex-col items-center justify-center h-screen bg-gray-100 p-8 rounded-lg shadow-lg">
-            <h1 className="text-4xl font-extrabold text-blue-600 mb-4">
-                Welcome to DevDocs – Your Coding Companion
-            </h1>
-            <p className="text-lg text-gray-700 mb-6">
-                Seamlessly generate documentation, explore code, and boost your development workflow.
+  useEffect(() => {
+    // Check if user is logged in by looking for token in localStorage
+    const token = localStorage.getItem("accessToken")
+    if (token) {
+      setIsLoggedIn(true)
+    }
+  }, [])
+
+  const handleLogin = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/py/auth/github')
+      const data = await response.json()
+      
+      if (data.auth_url) {
+        window.location.href = data.auth_url
+      } else {
+        throw new Error('Failed to get authorization URL')
+      }
+    } catch (error) {
+      console.error('Login error:', error)
+      setIsLoading(false)
+    }
+  }
+
+  const handleContinue = () => {
+    router.push("/repositories")
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
+      <Card className="w-full max-w-md">
+        <CardContent className="pt-6">
+          <div className="flex flex-col items-center space-y-6">
+            <Github className="h-16 w-16 text-gray-800" />
+            <h1 className="text-2xl font-bold text-center">GitHub Documentation Generator</h1>
+            <p className="text-center text-gray-500">
+              Generate comprehensive documentation for your GitHub repositories using AI
             </p>
-            <div className="flex justify-center space-x-4">
-                <LoginButton />
-            </div>
-        </main>
-    );
+
+            {isLoggedIn ? (
+              <Button className="w-full" onClick={handleContinue}>
+                Continue to Repositories
+              </Button>
+            ) : (
+              <Button className="w-full" onClick={handleLogin} disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Connecting to GitHub...
+                  </>
+                ) : (
+                  <>
+                    <Github className="mr-2 h-4 w-4" />
+                    Login with GitHub
+                  </>
+                )}
+              </Button>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  )
 }
+
